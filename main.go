@@ -15,27 +15,39 @@ var session *discordgo.Session
 
 const RemoveCommands = true
 
-var commands = []*discordgo.ApplicationCommand{
+type Command struct {
+	Name        string
+	Description string
+	Type        discordgo.ApplicationCommandType
+	Handler     func(s *discordgo.Session, i *discordgo.InteractionCreate)
+}
+
+func (c *Command) GetApplicationCommand() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        c.Name,
+		Description: c.Description,
+		Type:        c.Type,
+	}
+}
+
+var commands1 = []Command{
 	{
 		Name:        "ping",
 		Description: "Basic ping command",
 		Type:        discordgo.ApplicationCommandType(1),
-	},
-}
+		Handler: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+			})
+			now := time.Now()
+			msg, _ := s.InteractionResponse(i.Interaction)
+			elapsed := now.Sub(msg.Timestamp)
 
-var commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-	"ping": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		})
-		now := time.Now()
-		msg, _ := s.InteractionResponse(i.Interaction)
-		elapsed := now.Sub(msg.Timestamp)
-
-		responseContent := fmt.Sprintf("Pong!\nClient: %dms\nWebsocket: %dms", elapsed.Milliseconds(), s.HeartbeatLatency().Milliseconds())
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: &responseContent,
-		})
+			responseContent := fmt.Sprintf("Pong!\nClient: %dms\nWebsocket: %dms", elapsed.Milliseconds(), s.HeartbeatLatency().Milliseconds())
+			s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+				Content: &responseContent,
+			})
+		},
 	},
 }
 
@@ -55,8 +67,12 @@ func main() {
 
 	// Register command handlers
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i)
+		name := i.ApplicationCommandData().Name
+		for _, command := range commands1 {
+			if command.Name == name {
+				command.Handler(s, i)
+			}
+			break
 		}
 	})
 
@@ -70,13 +86,13 @@ func main() {
 	guilds := s.State.Guilds
 	registeredCommands := make([][]*discordgo.ApplicationCommand, len(guilds))
 	for i := range guilds {
-		registeredCommands[i] = make([]*discordgo.ApplicationCommand, len(commands))
+		registeredCommands[i] = make([]*discordgo.ApplicationCommand, len(commands1))
 	}
 
 	for i, guild := range guilds {
 		log.Printf("Adding commands for %s (%s)...", guild.Name, guild.ID)
-		for j, v := range commands {
-			cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, v)
+		for j, v := range commands1 {
+			cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, v.GetApplicationCommand())
 			if err != nil {
 				log.Printf("Cannot create command '%v' error: %v", v.Name, err)
 			}
