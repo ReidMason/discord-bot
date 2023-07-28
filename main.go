@@ -43,9 +43,23 @@ var commands = []Command{
 			msg, _ := s.InteractionResponse(i.Interaction)
 			elapsed := now.Sub(msg.Timestamp)
 
-			responseContent := fmt.Sprintf("Pong!\nClient: %dms\nWebsocket: %dms", elapsed.Milliseconds(), s.HeartbeatLatency().Milliseconds())
+			// responseContent := fmt.Sprintf("Pong!\nClient: %dms\nWebsocket: %dms", elapsed.Milliseconds(), s.HeartbeatLatency().Milliseconds())
 			s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-				Content: &responseContent,
+				Embeds: &[]*discordgo.MessageEmbed{
+					{
+						Title: "Pong!",
+						Fields: []*discordgo.MessageEmbedField{
+							{
+								Name:  "Client",
+								Value: fmt.Sprintf("%dms", elapsed.Milliseconds()),
+							},
+							{
+								Name:  "Websocket",
+								Value: fmt.Sprintf("%dms", s.HeartbeatLatency().Milliseconds()),
+							},
+						},
+					},
+				},
 			})
 		},
 	},
