@@ -49,6 +49,34 @@ var commands = []Command{
 			})
 		},
 	},
+	{
+		Name:        "test",
+		Description: "A test command",
+		Type:        discordgo.ApplicationCommandType(1),
+		Handler: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{
+						{
+							Title:       "Testing",
+							Description: "Description testing",
+							Fields: []*discordgo.MessageEmbedField{
+								{
+									Name:  "Field 1",
+									Value: "Value 1",
+								},
+								{
+									Name:  "Field 2",
+									Value: "Value 2",
+								},
+							},
+						},
+					},
+				},
+			})
+		},
+	},
 }
 
 func main() {
@@ -71,8 +99,8 @@ func main() {
 		for _, command := range commands {
 			if command.Name == name {
 				command.Handler(s, i)
+				break
 			}
-			break
 		}
 	})
 
