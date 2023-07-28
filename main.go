@@ -30,7 +30,7 @@ func (c *Command) GetApplicationCommand() *discordgo.ApplicationCommand {
 	}
 }
 
-var commands1 = []Command{
+var commands = []Command{
 	{
 		Name:        "ping",
 		Description: "Basic ping command",
@@ -68,7 +68,7 @@ func main() {
 	// Register command handlers
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		name := i.ApplicationCommandData().Name
-		for _, command := range commands1 {
+		for _, command := range commands {
 			if command.Name == name {
 				command.Handler(s, i)
 			}
@@ -86,12 +86,12 @@ func main() {
 	guilds := s.State.Guilds
 	registeredCommands := make([][]*discordgo.ApplicationCommand, len(guilds))
 	for i := range guilds {
-		registeredCommands[i] = make([]*discordgo.ApplicationCommand, len(commands1))
+		registeredCommands[i] = make([]*discordgo.ApplicationCommand, len(commands))
 	}
 
 	for i, guild := range guilds {
 		log.Printf("Adding commands for %s (%s)...", guild.Name, guild.ID)
-		for j, v := range commands1 {
+		for j, v := range commands {
 			cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, v.GetApplicationCommand())
 			if err != nil {
 				log.Printf("Cannot create command '%v' error: %v", v.Name, err)
