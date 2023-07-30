@@ -1,4 +1,5 @@
 ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/ReidMason/discord-bot/docker-publish.yml?logo=Docker)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/skippythesnake/discord-bot/latest?logo=docker)
 
 # Discord bot
 
