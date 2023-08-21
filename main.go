@@ -15,6 +15,24 @@ var session *discordgo.Session
 
 const RemoveCommands = true
 
+const UpvoteEmoji = "😂"
+
+type UserProfile struct {
+	ID    string
+	Karma int
+}
+
+func addKarma(userId string, users *[]UserProfile, amount int) {
+	for _, user := range *users {
+		if user.ID == userId {
+			user.Karma += amount
+			return
+		}
+	}
+
+	*users = append(*users, UserProfile{ID: userId, Karma: amount})
+}
+
 type Command struct {
 	Name        string
 	Description string
@@ -61,6 +79,33 @@ var commands = []Command{
 					},
 				},
 			})
+		},
+	},
+	{
+		Name:        "calckarma",
+		Description: "Calculate karma score of users",
+		Type:        discordgo.ApplicationCommandType(1),
+		Handler: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			channelId := i.ChannelID
+			messages, err := s.ChannelMessages(channelId, 100, "", "", "")
+			if err != nil {
+				log.Println(err)
+			}
+
+			users := make([]UserProfile, 0)
+
+			for _, message := range messages {
+				reactions := message.Reactions
+				for _, reaction := range reactions {
+					if reaction.Emoji.Name == UpvoteEmoji {
+						addKarma(message.Author.ID, &users, 1)
+					}
+				}
+			}
+
+			for _, user := range users {
+				log.Println(user.ID, user.Karma)
+			}
 		},
 	},
 	{
